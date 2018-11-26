@@ -376,7 +376,7 @@ class XMLSecurityDSig
      * @param bool $includeCommentNodes
      * @return string
      */
-    public function processTransforms($refNode, $objData, $includeCommentNodes = true)
+    public function processTransforms($refNode, $objData, $includeCommentNodes = true, $onlyValidateUsedNamespaces = true)
     {
         $data = $objData;
         $xpath = new DOMXPath($refNode->ownerDocument);
@@ -410,7 +410,14 @@ class XMLSecurityDSig
                                 foreach ($pfxlist AS $pfx) {
                                     $val = trim($pfx);
                                     if (! empty($val)) {
-                                        $arpfx[] = $val;
+                                        // Validate actual use of the namespace
+                                        $xml    = $objData->ownerDocument->saveXML($objData);
+                                        $regex  = $val === '#default' ? "/<[^>:]>/" : "/<$val:[^>]+>/";
+                                        $used   = preg_match($regex, $xml);
+
+                                        if($used || !$onlyValidateUsedNamespaces) {
+                                            $arpfx[] = $val;
+                                        }
                                     }
                                 }
                                 if (count($arpfx) > 0) {
@@ -511,9 +518,11 @@ class XMLSecurityDSig
 
             $dataObject = $refNode->ownerDocument;
         }
-        $data = $this->processTransforms($refNode, $dataObject, $includeCommentNodes);
-        if (!$this->validateDigest($refNode, $data)) {
-            return false;
+        $dataOfUsedNamespaces = $this->processTransforms($refNode, $dataObject, $includeCommentNodes, true);
+        $dataOfAllNamespaces = $this->processTransforms($refNode, $dataObject, $includeCommentNodes, false);
+        if (!$this->validateDigest($refNode, $dataOfUsedNamespaces)
+        && !$this->validateDigest($refNode, $dataOfAllNamespaces)) {
+            return FALSE;
         }
 
         if ($dataObject instanceof DOMNode) {
