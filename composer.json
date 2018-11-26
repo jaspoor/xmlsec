@@ -19,6 +19,10 @@
     "ext-openssl": "*"
   },
   "replace": {
-    "simplesamlphp/xmlsec": "self.version"
+    "simplesamlphp/xmlsec": "self.version",
+    "cdatazone/xmlseclibs": "self.version",
+    "fr3d/xmlseclibs": "self.version",
+    "robrichards/xmlseclibs": "self.version",
+    "rnijveld/xmlseclibs": "self.version"
   }
 }
